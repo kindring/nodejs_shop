@@ -4,9 +4,9 @@
 
 ### 依赖
 
-	#### 	node
+#### node
+#### npm
 
-	#### 	npm
 
 #### 	mongodb
 
