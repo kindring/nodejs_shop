@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>码商购物车</title>
+
+    <link rel="stylesheet" href="./css/public.css">
+    <link rel="stylesheet" href="./css/top_pc.css">
+    <link rel="stylesheet" href="./css/user/content.css">
+    <link rel="stylesheet" href="./css/user/car.css">
+</head>
+<body>
+<header class="site_top" id="site_top">
+    <nav class="top_nav">
+        <div class="titles fl">
+            <ul>
+                <li class="lis"><a href="/">首页</a></li>
+                <li class="lis"><a href="/admin">管理</a></li>
+                <li class="lis"><a href="/login">登录</a></li>
+                <li class="lis"><a href="/search?sort=0&keyword=">查询</a></li>
+            </ul>
+        </div>
+        <div class="userBox fr" id="user">
+            <ul>
+                <li class="lis">联系客服</li>
+                <li class="lis">历史记录</li>
+                <li class="lis"><a href="/car?pid" id="head_user_car">购物车</a></li>
+                <li class="lis" id="users">
+                    <img id="top_user_header" class="user_header" alt="头像加载失败" >
+                    <a id="top_user_name" title="user_name">个人中心</a>
+                    <div class="user_msg">
+                        <h2 id="u_name">暂未登录</h2>
+                        <div class="descript" id="u_descript">
+                            登录后享受更多快乐
+                        </div>
+                        <div class="btn_box">
+                            <a href="/login" class="btn" id="u_btn">前往登录</a>
+                        </div>
+                    </div>
+                </li>
+            </ul>
+        </div>
+    </nav>
+</header>
+<script>
+    function gi(id){return document.getElementById(id)}
+    function getXmlHttp(){
+        if (window.XMLHttpRequest)
+        {// 判断是否有该对象
+            return new XMLHttpRequest();
+        }
+        else if (window.ActiveXObject)
+        {// 判断是否是兼容ie5和ie6
+            return new ActiveXObject("Microsoft.XMLHTTP");
+        }else{
+            return null;
+        }
+    }
+    let user_name=gi('top_user_name');
+    let header=gi('top_user_header');
+    let u_btn=gi('u_btn');
+    let u_name=gi('u_name');
+    let u_descript=gi('u_descript');
+    let head_user_car=gi('head_user_car');
+    if(window.localStorage.getItem('u')){
+        let user_obj=window.localStorage.getItem('u');
+        user_obj=JSON.parse(user_obj);
+        header.src='/header?pid='+user_obj.pid;
+        user_name.href="/user/"+user_obj.pid+"?token="+user_obj.token;
+        u_btn.href="/logout?pid="+user_obj.pid;
+        head_user_car.href='/car?pid='+user_obj.pid;
+        user_name.title="加载中";
+        u_btn.innerHTML="注销";
+        u_name.innerHTML="获取名称中";
+        u_descript.innerHTML="获取最新简介中";
+        let xml=getXmlHttp();
+        xml.open('POST','/log',true);
+        xml.send(JSON.stringify(user_obj));
+        xml.onreadystatechange=function(){
+            if(xml.readyState===4&&xml.status){
+                let response=xml.responseText;
+                response=JSON.parse(response);
+                if(response.errCode){
+                    header.style.display="none";
+                    user_name.href="/login";
+                    u_btn.href="/login";
+                    head_user_car.href="/login";
+                    head_user_car.title="请先登录";
+                    user_name.title="未登录";
+                    u_btn.innerHTML="前往登录";
+                    u_name.innerHTML="未登录";
+                    u_descript.innerHTML="登录享受更多特权";
+                    return console.log(response);
+                }
+                header.src='/header?pid='+response.pid;
+                head_user_car.href='/car?pid='+response.pid;
+                user_name.href="/user/"+response.pid+"?"+response.token;
+                u_btn.href='';
+                user_name.title=response.name+"的个人中心";
+                u_btn.innerHTML="注销";
+                u_btn.onclick=function(){
+
+                    let log_xml=getXmlHttp();
+                    let href='logout?pid='+response.pid;
+                    window.localStorage.removeItem("u");
+                    log_xml.open('GET',href,true);
+                    log_xml.send();
+                    log_xml.onreadystatechange=function(){
+                        header.style.display="none";
+                        user_name.href="/login";
+                        u_btn.href="/login";
+                        head_user_car.href="/login";
+                        user_name.title="个人中心";
+                        u_btn.innerHTML="前往登录";
+                        u_name.innerHTML="未登录";
+                        u_descript.innerHTML="登录享受更多特权";
+                        window.location.href='/'
+                    };
+                    console.log('回到主页');
+                    window.location.href='/';
+                    return false;
+                };
+                u_name.innerHTML=response.name;
+                u_descript.innerHTML=response.brief;
+                window.localStorage.setItem('u',xml.responseText);
+            }
+        }
+    }else{
+        header.style.display="none";
+        user_name.href="/login";
+        u_btn.href="/login";
+        user_name.title="个人中心";
+        u_btn.innerHTML="前往登录";
+        u_name.innerHTML="未登录";
+        u_descript.innerHTML="登录享受更多特权";
+    }
+</script>
+<div class="con">
+    <div class="vertical">
+        <div class="person chunk">
+            <div class="title">个人中心</div>
+            <ul class="ul_u">
+                <li class="lis">
+                    <a href="#">个人信息</a>
+                </li>
+                <li class="lis">
+                    <a href="#">我的余额</a>
+                </li>
+                <li class="lis">
+                    <a href="#">购物车</a>
+                </li>
+            </ul>
+        </div>
+        <div class="person chunk">
+            <div class="title">订单中心</div>
+            <ul class="ul_order">
+                <li class="lis">
+                    <a href="#">我的订单</a>
+                </li>
+                <li class="lis">
+                    <a href="#">团购订单</a>
+                </li>
+                <li class="lis">
+                    <a href="#">待评价</a>
+                </li>
+                <li class="lis">
+                    <a href="#">已评价</a>
+                </li>
+            </ul>
+        </div>
+
+    </div>
+    <div class="chunk_right">
+        <div class="top_chunk">
+            <div class="me" id="me_msg">
+                <div class="_user">
+                    <div class="head">
+                        <img src="/header?pid={{user.pid}}" alt="">
+                        <a href="/editor/{{user.pid}}?{{user.token}}">编辑资料</a>
+                    </div>
+                    <div class="name">
+                        <a href="/editor/{{user.pid}}?{{user.token}}">{{user.name}}</a>
+                    </div>
+                    <div class="describe">
+                        <div class="shdz">收货地址</div>
+                        <div class="brief">
+                            <h3>个人简介</h3>
+                            {{user.brief}}
+                        </div>
+                    </div>
+                </div>
+                <div class="router">
+                    <ul>
+                        <li class="lis">
+                            <a href="">待付款</a>
+                        </li>
+                        <li class="lis">
+                            <a href="">待发货</a>
+                        </li>
+                        <li class="lis">
+                            <a href="">待收获</a>
+                        </li>
+                        <li class="lis">
+                            <a href="">待发货</a>
+                        </li>
+                        <li class="lis">
+                            <a href="">售后</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            <div class="banner">
+                <img src="./imgs/7.png" alt="">
+                <a href="#">这是一个广告</a>
+            </div>
+        </div>
+        <div class="recommend">
+            <div class="title_box">
+                <h2>码商:我的购物车</h2>
+            </div>
+            <div class="carList">
+                <div class="list_head notcheck" id="all_check">
+                    <div class="col col-check">
+                        <div class="check">
+                            <img src="imgs/icon/point.png" alt="">
+                        </div>
+                        全选
+                    </div>
+                    <div class="col col-img"></div>
+                    <div class="col col-name">商品名称</div>
+                    <div class="col col-price">商品单价</div>
+                    <div class="col col-num">商品数量</div>
+                    <div class="col col-total">小计</div>
+                    <div class="col col-action">操作</div>
+                </div>
+                <div class="car_body">
+                    <ul id="car_ul">
+                        <!--<li class="item-box notcheck">-->
+                            <!--<div class="col col-check">-->
+                                <!--<div class="check"><img src="imgs/icon/point.png" alt=""></div>-->
+                            <!--</div>-->
+                            <!--<div class="col col-img">-->
+                                <!--<a href="/">-->
+                                    <!--<img src="imgs/0.png" alt="">-->
+                                <!--</a>-->
+                            <!--</div>-->
+                            <!--<div class="col col-name">小米mix3</div>-->
+                            <!--<div class="col col-price">1978元</div>-->
+                            <!--<div class="col col-num">-->
+                                <!--<div class="select_num">-->
+                                    <!--<div class="left_btn c btn_c">-</div>-->
+                                    <!--<div class="number_box c ">1</div>-->
+                                    <!--<div class="right_btn c btn_c">+</div>-->
+                                <!--</div>-->
+                            <!--</div>-->
+                            <!--<div class="col col-total">1978元</div>-->
+                            <!--<div class="col col-action">删除</div>-->
+                        <!--</li>-->
+
+                    </ul>
+                </div>
+                <div class="settle">
+                    <div class="all_total">总价:
+                        <span id="all_total">0</span>
+                        元
+                    </div>
+                    <div class="btn_chunk">
+                        <div class="btn">结算</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+<div style="display:none;">
+    <span id="hide_user_pid">{{user.pid}}</span>
+</div>
+<script>
+    let page=1;
+    let xml=getXmlHttp();
+    let query='/carlist?';
+    let pid=gi('hide_user_pid').innerHTML;
+    query+="pid="+pid;
+    query+="&pageNum="+page;
+    query+="&limit=1000";//直接拉取1000条数据,总数据量
+    xml.open('GET',query,true);
+    xml.send();
+    xml.onreadystatechange=function(){
+        if(xml.readyState===4&&xml.status){
+            let response=xml.responseText;
+            console.log(response);
+            if(isJSON(response)){
+                response=JSON.parse(response);
+                if(response.errCode){
+                    console.log(response.describe);
+                    return;
+                }
+                if(response.gid){
+                    render([response]);
+                }
+            }else{
+                response=response.split('|*-*|');
+                for(let i=0;i<response.length;i++){
+                    response[i]=JSON.parse(response[i]);
+                }
+                render(response);
+            }
+
+        }
+    };
+
+    let car_list=[];
+    let is_all_check=true;
+    let all_check=gi('all_check');
+    let li_els=[];
+
+    all_check.getElementsByClassName('check')[0].onclick=function(){
+        if(is_all_check){
+            is_all_check=false;
+            all_check.className="list_head notcheck";
+         }else{
+            is_all_check=true;
+            all_check.className="list_head i_check";
+        }
+        let checkstate=is_all_check?0:1;
+        let className=is_all_check?'item-box i_check':'item-box notcheck';
+        for(let i = 0;i<car_list.length;i++){
+            car_list[i].check=checkstate;
+            li_els[i].className=className;
+            change_car_item(car_list[i]);
+        }
+        calculate_total()
+    };
+
+    function isJSON(str) {
+        if (typeof str == 'string') {
+            try {
+                var obj=JSON.parse(str);
+                if(str.indexOf('{')>-1){
+                    return true;
+                }else{
+                    return false;
+                }
+
+            } catch(e) {
+                //console.log(e);
+                return false;
+            }
+        }
+        return false;
+    }
+
+    function render(list){
+        console.log(list.length);
+        if(list.length===0){
+            alert("购物车无内容前往购物吧");
+            shownotcar();//展示购物车内已经无内容的提示
+            return
+        }
+        car_list=list;
+
+        let car_ul=gi('car_ul');
+        for(let i=0;i<list.length;i++){
+            car_list[i]['total']=parseInt(car_list[i].now_sell)*parseInt(car_list[i].num);
+            let newli=additem( car_list[i]);
+            addEvent(newli,i);
+            li_els[i]=newli;
+            car_ul.appendChild(newli);
+        }
+        if(is_all_check){
+            all_check.className="list_head i_check";
+        }
+        calculate_total()
+    }
+    //展示没有购物车内容的页面提示
+    function shownotcar(){
+
+    }
+    //根据此项动态创建一条dom数据
+    function additem(json){
+
+        let col_check=el('div',{
+                class:'col col-check'
+            },[el('div',{class:'check'},
+                [el('img',{src:'imgs/icon/point.png'})])
+            ]);
+        let cover=el('div',{class:'col col-img'},[
+            el('a',{href:'/commodity?gid='+json.gid},
+                [el('img',{src:'/goods_cover?gid='+json.gid})]
+            )
+        ]);
+        let col_name=el('div',{class:'col col-name'},[json.name]);
+        let col_price=el('div',{class:'col col-price'},[json.now_sell+"元"]);
+        let col_num=el('div',{class:'col col-num'},[
+            el('div',{class:'select_num'},[
+                el('div',{class:'left_btn c btn_c'},['-']),
+                el('div',{class:'number_box c '},[json.num]),
+                el('div',{class:'right_btn c btn_c'},['+'])
+            ])
+        ]);
+        let col_total=el('div',{class:'col col-total'},[json.total+"元"]);
+        let col_action=el('div',{class:'col col-action'},['删除']);
+        let newitel=null;
+        if(json.check!=0) {
+            is_all_check=false;
+            newitel = el('li', {class: 'item-box notcheck'}, [
+                col_check, cover, col_name, col_price, col_num, col_total, col_action
+            ]);
+        }else{
+            newitel = el('li', {class: 'item-box i_check'}, [
+                col_check, cover, col_name, col_price, col_num, col_total, col_action
+            ]);
+        }
+        return newitel.render();
+    }
+
+
+
+    let lock=true;
+    function addEvent(_el,_index){
+        let checkel=_el.getElementsByClassName('check')[0];
+        checkel.onclick=function(){
+            console.log(car_list[_index]);
+            if(car_list[_index].check===0){
+                car_list[_index].check=1;
+                _el.className='item-box notcheck';
+                test_all();
+            }else{
+                car_list[_index].check=0;
+                _el.className='item-box i_check';
+                test_all();
+            }
+            change_car_item(car_list[_index]);
+            calculate_total()
+        };
+        let add=_el.getElementsByClassName('right_btn')[0];
+        let num_el=_el.getElementsByClassName('number_box')[0];
+        let sub=_el.getElementsByClassName('left_btn')[0];
+        let total_el=_el.getElementsByClassName('col-total')[0];
+        add.onclick=function(){
+            car_list[_index].num++;
+            car_list[_index].total=calculate(car_list[_index]);
+            total_el.innerHTML=car_list[_index].total+"元";
+            num_el.innerHTML=car_list[_index].num;
+            change_car_item(car_list[_index]);
+            calculate_total()
+        };
+        sub.onclick=function(){
+            if(car_list[_index].num>1){
+                car_list[_index].num--;
+            }
+            car_list[_index].total=calculate(car_list[_index]);
+            total_el.innerHTML=car_list[_index].total+"元";
+            num_el.innerHTML=car_list[_index].num;
+            change_car_item(car_list[_index]);
+            calculate_total()
+        };
+        let del_el=_el.getElementsByClassName('col-action')[0];
+        del_el.onclick=function(){
+            if(!lock){
+                return alert('请稍后再试')
+            }
+            console.log('删除?');
+
+            delate_list(car_list[_index],function(){
+                car_list=removeArr(car_list,_index);
+                console.log(car_list);
+                li_els=removeArr(li_els,_index);
+                lock=true;
+                _el.parentNode.removeChild(_el);
+                calculate_total()
+            });
+        }
+    }
+    //调用接口进行删除
+    function delate_list(item,callback){
+        if(!item){
+           return alert('请重试');
+        }
+        let xmlhttp=getXmlHttp();
+        let del_query='/del_car';
+        del_query+="?gid="+item.gid;
+        del_query+="&pid="+pid;
+        xmlhttp.open('GET',del_query,true);
+        xmlhttp.send();
+        lock=false;
+        xmlhttp.onreadystatechange=function(){
+            if(xmlhttp.readyState===4&&xmlhttp.status){
+                let response=xmlhttp.responseText;
+                if(isJSON(response)){
+                    response=JSON.parse(response);
+                    if(response.errCode){
+                        return alert(response.describe);
+                    }
+                    callback()
+                }
+            }
+         }
+    }
+    //调用接口进行修改
+    function change_car_item(item){
+        let _query='/change_car';
+        _query+="?pid="+item.pid;
+        _query+="&gid="+item.gid;
+        _query+="&num="+item.num;
+        _query+="&check="+item.check;
+        let xmlhttp=getXmlHttp();
+        xmlhttp.open('GET',_query,true);
+        xmlhttp.send();
+        xmlhttp.onreadystatechange=function(){
+            if(xmlhttp.readyState===4&&xmlhttp.status){
+                let response=xml.responseText;
+                if(isJSON(response)){
+                    response=JSON.parse(response);
+                    if(response.errCode){
+                        return alert(response.describe);
+                    }
+                    console.log(response);
+                }
+            }
+        }
+    }
+    function test_all(){
+        is_all_check=true;
+        for(let i=0;i<car_list.length;i++){
+            if(car_list[i].check!==0){
+                is_all_check=false;
+            }
+        }
+        if(is_all_check){
+            all_check.className="list_head i_check";
+        }else{
+            all_check.className="list_head notcheck";
+        }
+    }
+    function calculate(item){
+        return parseInt(item.num)*parseInt(item.now_sell);
+    }
+    //计算总金额
+    let all_sell_total=gi('all_total');
+    function calculate_total(){
+        let all_total=0;
+        for(let i = 0;i<car_list.length;i++){
+            if(car_list[i].check===0){
+                all_total+=parseInt(car_list[i].total);
+            }
+        }
+        all_sell_total.innerHTML=all_total;
+    }
+
+
+
+    function element(tagName,props,children){
+        this.tName=tagName;
+        this.props=props;
+        this.children=children;
+    }
+    element.prototype.render=function(){
+        var el=document.createElement(this.tName);
+        var props = this.props;
+        //设置属性
+        for(var propName in props){
+            var propValue = props[propName];
+            el.setAttribute(propName,propValue);
+        }
+        var children = this.children || [];
+        children.forEach(function(child){
+            var childEl = child; // 如果字符串，只构建文本节点
+
+            if(child.tName){
+                childEl=child.render();
+            }else if(typeof(child)=="string"||typeof(child)=="number"){
+                childEl=document.createTextNode(child)
+            }else{
+                if(child instanceof Element){
+                    childEl=child;
+                }
+            }
+            //console.log(childEl);
+            el.appendChild(childEl);
+        });
+        return el;
+    };
+    window.el=function(tagName,props,children){
+        return new element(tagName,props,children);
+    };
+    removeArr=function(arr,_index){
+        if(arr[_index+1]){
+            let l=arr.length-1;
+            for(let i=_index;i<l;i++){
+                if(arr[i+1]){
+                    arr[i]=arr[i+1]
+                }
+            }
+        }
+        arr.length=arr.length-1;
+        return arr;
+    }
+
+    //测试用例
+    // let newel=el('ul',{
+    //     id:'ulss',
+    //     class:'abc',
+    // });
+    // console.log(newel.render());
+</script>
+</body>
+</html>
